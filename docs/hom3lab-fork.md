@@ -17,3 +17,10 @@ existing same-format upgrade and wrong-folder protection remain covered by tests
 Affected author folders must be rescanned to restore already detached records.
 
 Changes and workflow preparation were assisted by OpenAI Codex.
+
+ImageSharp 4.1.2 requires a Six Labors license key during compilation. Set the
+`SIXLABORS_LICENSE_KEY` repository Actions secret; the workflow passes it as the
+supported `SixLaborsLicenseKey` MSBuild property through the build environment.
+The workflow supplies the key only to the build environment; do not commit it to
+source. The direct consuming assembly is `Readarr.Core`. Six Labors offers
+application-based community licensing at https://licensing.sixlabors.com/.

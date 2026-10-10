@@ -87,6 +87,7 @@ jobs:
         run: ./build.sh --backend --frontend
         env:
           READARRVERSION: ${{ steps.variables.outputs.build_version }}
+          SixLaborsLicenseKey: ${{ secrets.SIXLABORS_LICENSE_KEY }}
 
       - name: Install Chromium for direct-download browser tests
         run: pwsh ./_tests/net10.0/linux-x64/playwright.ps1 install --with-deps chromium
