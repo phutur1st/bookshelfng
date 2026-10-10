@@ -90,6 +90,16 @@ namespace NzbDrone.Core.MediaFiles
 
             foreach (var file in existingFiles)
             {
+                // Another format can legitimately live in its own author/library folder.
+                // Only replacement candidates belong to this import's folder safety check.
+                if (!MediaFileExtensions.AreCompatibleFormats(file.Quality?.Quality,
+                                                              file.Path,
+                                                              bookFile.Quality?.Quality,
+                                                              localBook.Path))
+                {
+                    continue;
+                }
+
                 var bookFilePath = file.Path;
                 var sourceRootFolder = _rootFolderService.GetBestRootFolder(bookFilePath);
                 var subfolder = (sourceRootFolder?.Path ?? rootFolderPath).GetRelativePath(_diskProvider.GetParentFolder(bookFilePath));
@@ -104,14 +114,6 @@ namespace NzbDrone.Core.MediaFiles
 
                     _mediaFileService.Delete(file, DeleteMediaFileReason.MissingFromDisk);
 
-                    continue;
-                }
-
-                if (!MediaFileExtensions.AreCompatibleFormats(file.Quality?.Quality,
-                                                              file.Path,
-                                                              bookFile.Quality?.Quality,
-                                                              localBook.Path))
-                {
                     continue;
                 }
 

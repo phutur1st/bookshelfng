@@ -195,6 +195,25 @@ namespace NzbDrone.Core.Test.MediaFiles
             ExceptionVerification.ExpectedWarns(1);
         }
 
+        [TestCase(".mp3", ".epub")]
+        [TestCase(".epub", ".mp3")]
+        [TestCase(".azw3", ".epub")]
+        public void should_preserve_other_format_in_a_separate_library_folder(string existingExtension, string incomingExtension)
+        {
+            var otherFolder = Path.Combine(_rootPath, "Other Library");
+            GivenExistingFileAt(Path.Combine(otherFolder, "book" + existingExtension));
+            _localTrack.Path = Path.Combine(_rootPath, "incoming" + incomingExtension);
+            GivenDestinationFolder(_rootPath);
+
+            var result = Subject.UpgradeBookFile(_trackFile, _localTrack);
+
+            Mocker.GetMock<IMediaFileService>()
+                .Verify(v => v.Delete(It.IsAny<BookFile>(), It.IsAny<DeleteMediaFileReason>()), Times.Never());
+            Mocker.GetMock<IRecycleBinProvider>()
+                .Verify(v => v.DeleteFile(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
+            result.OldFiles.Should().BeEmpty();
+        }
+
         [Test]
         public void should_still_delete_existing_file_in_the_destination_folder()
         {
