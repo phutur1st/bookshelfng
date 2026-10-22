@@ -134,8 +134,10 @@ namespace NzbDrone.Core.Test.MetadataSource.Hardcover
             ((JArray)work["editions"]).Add(second);
             Mocker.GetMock<IHttpClient>()
                 .Setup(x => x.Execute(It.IsAny<HttpRequest>()))
-                .Returns<HttpRequest>(request => new HttpResponse(request,
-                    new HttpHeader { { "Content-Type", "application/json" } }, response.ToString()));
+                .Returns<HttpRequest>(request => new HttpResponse(
+                    request,
+                    new HttpHeader { { "Content-Type", "application/json" } },
+                    response.ToString()));
 
             var result = Subject.GetWork("101");
 
@@ -155,8 +157,10 @@ namespace NzbDrone.Core.Test.MetadataSource.Hardcover
             });
             Mocker.GetMock<IHttpClient>()
                 .Setup(x => x.Execute(It.IsAny<HttpRequest>()))
-                .Returns<HttpRequest>(request => new HttpResponse(request,
-                    new HttpHeader { { "Content-Type", "application/json" } }, response.ToString()));
+                .Returns<HttpRequest>(request => new HttpResponse(
+                    request,
+                    new HttpHeader { { "Content-Type", "application/json" } },
+                    response.ToString()));
 
             Subject.GetWork("101").Books[0].Narrator.Should().BeEmpty();
         }
