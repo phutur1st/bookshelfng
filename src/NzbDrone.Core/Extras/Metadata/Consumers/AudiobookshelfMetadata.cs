@@ -68,7 +68,8 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
                 return null;
             }
 
-            if (Settings.VerifySourceTitle && !HasMatchingSourceTitle(bookFile, edition.Title ?? book.Title))
+            if ((Definition?.Settings as LibraryOpfSettings)?.VerifySourceTitle == true &&
+                !HasMatchingSourceTitle(bookFile, edition.Title ?? book.Title))
             {
                 _logger.Warn("Skipping OPF export for {0}: selected catalog title does not match source title evidence", bookFile.Path);
                 return null;

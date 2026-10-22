@@ -13,6 +13,7 @@ using NzbDrone.Core.Extras.Metadata;
 using NzbDrone.Core.Extras.Metadata.Consumers;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.ThingiProvider;
 
 namespace NzbDrone.Core.Test.Extras.Metadata
 {
@@ -79,6 +80,13 @@ namespace NzbDrone.Core.Test.Extras.Metadata
         {
             _file.Path = Path.ChangeExtension(_file.Path, extension);
             Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+        }
+
+        [Test]
+        public void existing_null_config_definitions_keep_their_previous_behavior()
+        {
+            _subject.Definition.Settings = new NullConfig();
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Not.Null);
         }
 
         [Test]
