@@ -108,6 +108,24 @@ namespace NzbDrone.Core.Test.Extras.Metadata
         }
 
         [Test]
+        public void marketing_subtitles_do_not_prevent_a_verified_title_export()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
+            _edition.Title = "Party of Two";
+            _tags.Setup(x => x.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo { BookTitle = "Party of Two: The brilliant opposites-attract rom-com" });
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Not.Null);
+        }
+
+        [Test]
+        public void numbered_parts_are_not_treated_as_marketing_subtitles()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
+            _edition.Title = "Never Never";
+            _tags.Setup(x => x.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo { BookTitle = "Never Never: Part Two" });
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+        }
+
+        [Test]
         public void a_matching_folder_can_supply_missing_tag_identity()
         {
             ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;

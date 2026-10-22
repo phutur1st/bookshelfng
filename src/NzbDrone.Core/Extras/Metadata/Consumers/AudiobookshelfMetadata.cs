@@ -122,6 +122,8 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
         {
             var value = Regex.Replace(title ?? string.Empty, @"\s*\(\d+\)$", string.Empty);
             value = Regex.Replace(value, @"\s*\((?:unabridged|abridged)\)", string.Empty, RegexOptions.IgnoreCase);
+            value = Regex.Replace(value, @"\s*(?:\(A Novel\)|[-:]\s*A Novel)$", string.Empty, RegexOptions.IgnoreCase);
+            value = Regex.Replace(value, @":\s*(?:the brilliant|an addictive|the only romance|a life.changing)\b.*$", string.Empty, RegexOptions.IgnoreCase);
             return Regex.Replace(value.Normalize(NormalizationForm.FormD), @"[^\p{L}\p{Nd}]", string.Empty).ToLowerInvariant();
         }
 

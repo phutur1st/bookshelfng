@@ -113,6 +113,55 @@ namespace NzbDrone.Core.Test.MetadataSource.Hardcover
         }
 
         [Test]
+        public void should_keep_narrators_scoped_to_the_selected_edition()
+        {
+            var response = JObject.Parse(WorkResponse);
+            var work = (JObject)response["data"]["books_by_pk"];
+            ((JArray)work["contributions"]).Add(new JObject
+            {
+                ["contribution"] = "Narrator",
+                ["author"] = new JObject { ["id"] = 90, ["name"] = "Unrelated Work Reader" }
+            });
+            var first = (JObject)work["editions"][0];
+            first["contributions"] = new JArray(new JObject
+            {
+                ["contribution"] = "Narrator",
+                ["author"] = new JObject { ["id"] = 91, ["name"] = "First Edition Reader" }
+            });
+            var second = (JObject)first.DeepClone();
+            second["id"] = 202;
+            second["contributions"][0]["author"]["name"] = "Second Edition Reader";
+            ((JArray)work["editions"]).Add(second);
+            Mocker.GetMock<IHttpClient>()
+                .Setup(x => x.Execute(It.IsAny<HttpRequest>()))
+                .Returns<HttpRequest>(request => new HttpResponse(request,
+                    new HttpHeader { { "Content-Type", "application/json" } }, response.ToString()));
+
+            var result = Subject.GetWork("101");
+
+            result.Books[0].Narrator.Should().Be("First Edition Reader");
+            result.Books[1].Narrator.Should().Be("Second Edition Reader");
+            result.Authors.Should().HaveCount(2);
+        }
+
+        [Test]
+        public void should_not_invent_an_edition_narrator_from_work_contributors()
+        {
+            var response = JObject.Parse(WorkResponse);
+            ((JArray)response["data"]["books_by_pk"]["contributions"]).Add(new JObject
+            {
+                ["contribution"] = "Narrator",
+                ["author"] = new JObject { ["id"] = 90, ["name"] = "Unverified Work Reader" }
+            });
+            Mocker.GetMock<IHttpClient>()
+                .Setup(x => x.Execute(It.IsAny<HttpRequest>()))
+                .Returns<HttpRequest>(request => new HttpResponse(request,
+                    new HttpHeader { { "Content-Type", "application/json" } }, response.ToString()));
+
+            Subject.GetWork("101").Books[0].Narrator.Should().BeEmpty();
+        }
+
+        [Test]
         public void should_search_when_optional_edition_metadata_is_json_null()
         {
             var requests = new List<HttpRequest>();

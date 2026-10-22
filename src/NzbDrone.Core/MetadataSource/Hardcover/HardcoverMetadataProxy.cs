@@ -141,6 +141,7 @@ query GetWorkByASINISBN($identifier: String!) {
     physical_format
     physical_information
     edition_information
+    contributions { contribution author { id name } }
     book {
       id
       title
@@ -213,6 +214,7 @@ query GetWork($bookID: Int!) {
       physical_format
       physical_information
       edition_information
+      contributions { contribution author { id name } }
     }
   }
 }";
@@ -263,6 +265,7 @@ query GetWorksByIds($ids: [Int!]!) {
       physical_format
       physical_information
       edition_information
+      contributions { contribution author { id name } }
     }
   }
 }";
@@ -314,6 +317,7 @@ query GetEdition($editionID: Int!) {
         physical_format
         physical_information
         edition_information
+        contributions { contribution author { id name } }
       }
     }
   }
@@ -388,6 +392,7 @@ query GetAuthorEditions($id: Int!, $limit: Int!, $offset: Int!) {
           physical_format
           physical_information
           edition_information
+          contributions { contribution author { id name } }
         }
       }
     }
@@ -856,7 +861,7 @@ query GetAuthorEditions($id: Int!, $limit: Int!, $offset: Int!) {
             var workId = GetInt(work["id"]);
             var format = GetString(edition["edition_format"]);
             var slug = GetString(work["slug"]);
-            var narrator = string.Join("; ", (work["contributions"] as JArray ?? new JArray())
+            var narrator = string.Join("; ", (edition["contributions"] as JArray ?? new JArray())
                 .OfType<JObject>()
                 .Where(x => IsNarratorRole(GetString(x["contribution"])))
                 .Select(x => GetString(AsObject(x["author"])?["name"]))
