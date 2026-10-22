@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
+using System.Linq;
+using System.Text.RegularExpressions;
+using NLog;
 using System.Text;
 using System.Xml;
 using NzbDrone.Core.Books;
@@ -11,10 +15,19 @@ using NzbDrone.Core.ThingiProvider;
 
 namespace NzbDrone.Core.Extras.Metadata.Consumers
 {
-    public class AudiobookshelfMetadata : MetadataBase<NullConfig>
+    public class AudiobookshelfMetadata : MetadataBase<LibraryOpfSettings>
     {
         private const string OpfNamespace = "http://www.idpf.org/2007/opf";
         private const string DcNamespace = "http://purl.org/dc/elements/1.1/";
+
+        private readonly IMetadataTagService _metadataTagService;
+        private readonly Logger _logger;
+
+        public AudiobookshelfMetadata(IMetadataTagService metadataTagService, Logger logger)
+        {
+            _metadataTagService = metadataTagService;
+            _logger = logger;
+        }
 
         public override string Name => "Library OPF";
 
@@ -56,6 +69,12 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
                 return null;
             }
 
+            if (Settings.VerifySourceTitle && !HasMatchingSourceTitle(bookFile, edition.Title ?? book.Title))
+            {
+                _logger.Warn("Skipping OPF export for {0}: selected catalog title does not match source title evidence", bookFile.Path);
+                return null;
+            }
+
             var authorName = bookFile.Author?.Value?.Name;
             if (string.IsNullOrWhiteSpace(authorName))
             {
@@ -74,6 +93,36 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
         public override List<ImageFileResult> BookImages(Author author, BookFile bookFile)
         {
             return new List<ImageFileResult>();
+        }
+
+        private bool HasMatchingSourceTitle(BookFile file, string catalogTitle)
+        {
+            var expected = NormalizeTitle(catalogTitle);
+            if (string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            string taggedTitle;
+            try
+            {
+                taggedTitle = _metadataTagService.ReadTags((FileInfoBase)new FileInfo(file.Path))?.BookTitle;
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Could not verify source tags for OPF export: {0}", file.Path);
+                return false;
+            }
+
+            var names = new[] { taggedTitle, Path.GetFileNameWithoutExtension(file.Path), Path.GetFileName(Path.GetDirectoryName(file.Path)) };
+            return names.Any(name => NormalizeTitle(name) == expected);
+        }
+
+        private static string NormalizeTitle(string title)
+        {
+            var value = Regex.Replace(title ?? string.Empty, @"\s*\(\d+\)$", string.Empty);
+            value = Regex.Replace(value, @"\s*\((?:unabridged|abridged)\)", string.Empty, RegexOptions.IgnoreCase);
+            return Regex.Replace(value.Normalize(NormalizationForm.FormD), @"[^\p{L}\p{Nd}]", string.Empty).ToLowerInvariant();
         }
 
         private static string CreateOpf(Edition edition, Book book, string authorName)

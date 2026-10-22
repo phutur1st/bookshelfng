@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
+using Moq;
+using NLog;
+using NzbDrone.Core.Extras.Metadata;
+using NzbDrone.Core.Parser.Model;
 using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
@@ -14,7 +19,8 @@ namespace NzbDrone.Core.Test.Extras.Metadata
     [TestFixture]
     public class LibraryOpfMetadataFixture
     {
-        private readonly AudiobookshelfMetadata _subject = new AudiobookshelfMetadata();
+        private AudiobookshelfMetadata _subject;
+        private Mock<IMetadataTagService> _tags;
         private Author _author;
         private BookFile _file;
         private Edition _edition;
@@ -24,6 +30,11 @@ namespace NzbDrone.Core.Test.Extras.Metadata
         [SetUp]
         public void Setup()
         {
+            _tags = new Mock<IMetadataTagService>();
+            _subject = new AudiobookshelfMetadata(_tags.Object, LogManager.GetCurrentClassLogger())
+            {
+                Definition = new MetadataDefinition { Settings = new LibraryOpfSettings() }
+            };
             _author = new Author { Name = "An Author", Path = Path.Combine(Path.GetTempPath(), "library", "An Author") };
             var book = new Book { Id = 7, ForeignBookId = "catalog-7", Title = "A Book", Author = _author, Genres = new List<string> { "Science & History" } };
             _edition = new Edition { Title = "A Book & More", Book = book, Isbn13 = "9781234567897", Asin = "B012345678", Narrator = "A Reader", Overview = "A <description>", ReleaseDate = new DateTime(2020, 6, 3) };
@@ -68,6 +79,34 @@ namespace NzbDrone.Core.Test.Extras.Metadata
         {
             _file.Path = Path.ChangeExtension(_file.Path, extension);
             Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+        }
+
+        [Test]
+        public void verified_embedded_titles_allow_export_without_changing_tags()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
+            _tags.Setup(x => x.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo { BookTitle = "A Book & More" });
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Not.Null);
+            _tags.Verify(x => x.WriteTags(It.IsAny<BookFile>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void conflicting_catalog_titles_are_not_published()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
+            _edition.Title = "An Unrelated Book";
+            _tags.Setup(x => x.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo { BookTitle = "A Book" });
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+        }
+
+        [Test]
+        public void a_matching_folder_can_supply_missing_tag_identity()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
+            _edition.Title = "A Book";
+            _file.Path = Path.Combine(_author.Path, "A Book (123)", "track001.mp3");
+            _tags.Setup(x => x.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo());
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Not.Null);
         }
 
         [Test]

@@ -68,3 +68,14 @@ first backfill, verify a representative ebook and audiobook, and keep readers
 read-only. To roll back, disable the provider, restore the saved sidecars, and
 rescan the readers; do not restore older reading-progress databases merely to
 undo a metadata change. Download and seeding locations are not export targets.
+
+### Auditing existing matches
+
+Enable **Verify Source Title** during an existing-library backfill. The publisher
+then requires the selected edition title to match embedded book tags, the file
+stem, or the containing folder (ignoring punctuation, case, audiobook edition
+markers and trailing Calibre numeric folder IDs). Unreadable tags fail closed.
+A conflicting match is logged and no sidecar is written. This check does not
+search for books, change assignments, download anything, or modify media.
+It is optional and off by default to preserve existing provider behavior.
+Review skipped and unmapped books in BookshelfNG before publishing them.
