@@ -16,7 +16,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
         private const string OpfNamespace = "http://www.idpf.org/2007/opf";
         private const string DcNamespace = "http://purl.org/dc/elements/1.1/";
 
-        public override string Name => "Audiobookshelf OPF";
+        public override string Name => "Library OPF";
 
         public override MetadataFile FindMetadataFile(Author author, string path)
         {
@@ -44,7 +44,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
         {
             if (bookFile.Part > 1 ||
                 string.IsNullOrWhiteSpace(bookFile.Path) ||
-                !MediaFileExtensions.AudioExtensions.Contains(Path.GetExtension(bookFile.Path)))
+                !MediaFileExtensions.AllExtensions.Contains(Path.GetExtension(bookFile.Path)))
             {
                 return null;
             }
@@ -97,6 +97,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
 
                 WriteDcElement(writer, "title", edition.Title ?? book.Title);
                 WriteCreator(writer, authorName, "aut");
+                WriteCreator(writer, edition.Narrator, "nrt");
 
                 var isbn = edition.Isbn13;
                 var asin = edition.Asin;
