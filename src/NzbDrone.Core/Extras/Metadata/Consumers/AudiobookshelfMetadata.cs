@@ -4,14 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Text.RegularExpressions;
-using NLog;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
+using NLog;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Extras.Metadata.Files;
 using NzbDrone.Core.MediaFiles;
-using NzbDrone.Core.ThingiProvider;
 
 namespace NzbDrone.Core.Extras.Metadata.Consumers
 {

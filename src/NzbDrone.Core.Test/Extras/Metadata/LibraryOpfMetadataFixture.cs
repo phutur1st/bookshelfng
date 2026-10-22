@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
-using Moq;
-using NLog;
-using NzbDrone.Core.Extras.Metadata;
-using NzbDrone.Core.Parser.Model;
 using System.Linq;
 using System.Xml.Linq;
+using Moq;
+using NLog;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
+using NzbDrone.Core.Extras.Metadata;
 using NzbDrone.Core.Extras.Metadata.Consumers;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Test.Extras.Metadata
 {
