@@ -61,6 +61,16 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
                 return null;
             }
 
+            var settings = Definition?.Settings as LibraryOpfSettings;
+            var excludedPaths = (settings?.ExcludedPaths ?? string.Empty).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (excludedPaths.Select(path => path.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                .Any(path => path.Length > 0 &&
+                    (string.Equals(bookFile.Path, path, StringComparison.OrdinalIgnoreCase) ||
+                     bookFile.Path.StartsWith(path + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))))
+            {
+                return null;
+            }
+
             var edition = bookFile.Edition?.Value;
             var book = edition?.Book?.Value;
             if (edition == null || book == null)
@@ -68,7 +78,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers
                 return null;
             }
 
-            if ((Definition?.Settings as LibraryOpfSettings)?.VerifySourceTitle == true &&
+            if (settings?.VerifySourceTitle == true &&
                 !HasMatchingSourceTitle(bookFile, edition.Title ?? book.Title))
             {
                 _logger.Warn("Skipping OPF export for {0}: selected catalog title does not match source title evidence", bookFile.Path);

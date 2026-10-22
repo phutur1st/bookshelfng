@@ -108,6 +108,23 @@ namespace NzbDrone.Core.Test.Extras.Metadata
         }
 
         [Test]
+        public void excluded_files_and_folder_contents_are_not_published()
+        {
+            var settings = (LibraryOpfSettings)_subject.Definition.Settings;
+            settings.ExcludedPaths = _file.Path;
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+            settings.ExcludedPaths = Path.GetDirectoryName(_file.Path);
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Null);
+        }
+
+        [Test]
+        public void a_similar_folder_prefix_is_not_excluded()
+        {
+            ((LibraryOpfSettings)_subject.Definition.Settings).ExcludedPaths = Path.Combine(_author.Path, "A Boo");
+            Assert.That(_subject.BookMetadata(_author, _file), Is.Not.Null);
+        }
+
+        [Test]
         public void marketing_subtitles_do_not_prevent_a_verified_title_export()
         {
             ((LibraryOpfSettings)_subject.Definition.Settings).VerifySourceTitle = true;
